@@ -15,6 +15,70 @@ library(spotifyr)
 library(compmus)
 ```
 
+### WEEK 9 HW: 1) CEPSTROGRAM: Examining Pitch Features
+```{r}
+craziest <-
+  get_tidy_audio_analysis("52o1gnWz14YMxlZYAYycTe") |> # Change URI.
+  compmus_align(bars, segments) |>                     # Change `bars`
+  select(bars) |>                                      #   in all three
+  unnest(bars) |>                                      #   of these lines.
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "euclidean"              # Change summary & norm.
+      )
+  ) |>
+  mutate(
+    timbre =
+      map(segments,
+        compmus_summarise, timbre,
+        method = "mean", norm = "euclidean"              # Change summary & norm.
+      )
+  )
+
+craziest |>
+  compmus_gather_timbre() |>
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = basis,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  scale_fill_viridis_c() +                              
+  theme_classic() +
+  ggtitle("Cepstrogram of Science Fiction")
+```
+***
+I chose to analyze a piece of jazz named 'Science Fiction'. This may be one of the most cacophonous pieces of music I have ever listened to. One can discern where it gets its jazz label from, but that's probably the extent of the relation to the genre. There is no distinct tempo/rhythm/beat, and the flurry of instrumentals combined with randomly placed vocals gives the graph its coloring. The song tends to stay in the same couple of pitches, which we see are C1, C3, and C6. It made the most sense to analyze this song in terms of bars as compared to beats/tatums/sections, since there is no distinct patterns throughout the song. The artist uses an extremely wide variety of different acoustics in this song -- even including the noises of a crying baby! Additionally, using a euclidean method of distance helps us best display the range of sound this song runs to, given its larger range as compared to other distance formulas.
+
+### WEEK 9 HW: 2) SELF-SIMILARITY MATRIX: Examining Chroma + Timbre Features
+```{r}
+craziest |>
+  compmus_self_similarity(timbre, "euclidean") |> 
+  ggplot(
+    aes(
+      x = xstart + xduration / 2,
+      width = xduration,
+      y = ystart + yduration / 2,
+      height = yduration,
+      fill = d
+    )
+  ) +
+  geom_tile() +
+  coord_fixed() +
+  scale_fill_viridis_c(guide = "none") +
+  theme_classic() +
+  labs(x = "Time (sec)", y = "Time (sec)") + 
+  ggtitle("Self-Similarity Matrix: Timbre in Science Fiction")
+```
+***
+The self-similarity matrix allows us to see exactly how chaotic this piece of music is. There is truly no distinct rhythm throughout the song, and only a few bars where some sort of tempo can be distinguished, around the 210th and 280th seconds; the very tailend of the song, with a mere 20 seconds to spare (when the song begins to finally slow and calm down). 
+
 ### [INTRODUCTION] An In-Depth Description of the Jazzical Corpus I Will Utilize Throughout This Course
 
 ```{r}
