@@ -1,0 +1,98 @@
+---
+title: "index.Rmd"
+author: "Trisha Kant"
+date: "2023-02-15"
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(spotifyr)
+library(compmus)
+```
+
+### [INTRODUCTION] An In-Depth Description of the Jazzical Corpus I Will Utilize Throughout This Course
+
+```{r}
+
+```
+***
+
+My corpus focuses on how has jazz evolved over the eras, starting from the 1920s. I picked this corpus because the origin of the genre and the multitude of strong cultural backgrounds tied to it piqued my interest. It will be interesting to explore the differences in the genre throughout the different ages of jazz, as well as how the abundance of sub-genres began to sprout from said eras as groups of comparison. I also like how there are a variety of instruments used in jazz, and different combinations of different instruments produce unique sounds. I expect some differences to be found in how the culture of the given time period, as well as sub-genre influence, affects the overall sound of that era in terms of tempo and chords. I expect for there to be an underlying similar rhythm maintained. There is a ridiculous amount of diversity in the world of jazz music on Spotify. I will have to find the specific sound of each decade and compare those, otherwise it is risky to get lost in the sea of sub-genres that exist within the genre. I have begun doing this by creating playlists that separate the eras of jazz -- I have started widely with "new" and "old" jazz (as such the playlists are named), and will continue to narrow down the scope of these playlists and refine the content such that they fill different niches of the genre.
+
+### [VISUALIZATION] #1: NEW Jazz Outlier Song
+```{r}
+nordic <-
+  get_tidy_audio_analysis("64SgPjq2ewcWwevrQO9wNQ") |>
+  select(segments) |>
+  unnest(segments) |>
+  select(start, duration, pitches)
+
+nordic |>
+  mutate(pitches = map(pitches, compmus_normalise, "manhattan")) |>
+  compmus_gather_chroma() |> 
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  ggtitle("Chromagraph of Nordic 'Jazz' Song") +
+  theme_minimal() +
+  scale_fill_viridis_c()
+```
+
+### Lab 9: Experimenting with Cepstrograms
+```{r}
+noBigThing <-
+  get_tidy_audio_analysis("5FIuy1qgSfOENMDKHjsAsb") |> # Change URI.
+  compmus_align(bars, segments) |>                     # Change `bars`
+  select(bars) |>                                      #   in all three
+  unnest(bars) |>                                      #   of these lines.
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "euclidean"              # Change summary & norm.
+      )
+  ) |>
+  mutate(
+    timbre =
+      map(segments,
+        compmus_summarise, timbre,
+        method = "mean", norm = "euclidean"              # Change summary & norm.
+      )
+  )
+
+noBigThing |>
+  compmus_self_similarity(timbre, "euclidean") |> 
+  ggplot(
+    aes(
+      x = xstart + xduration / 2,
+      width = xduration,
+      y = ystart + yduration / 2,
+      height = yduration,
+      fill = d
+    )
+  ) +
+  geom_tile() +
+  coord_fixed() +
+  scale_fill_viridis_c(guide = "none") +
+  theme_classic() +
+  labs(x = "", y = "")
+```
+
+
+### [DISCUSSION]
+
+***
+
+(Important to note that I tried to add this commentary to the visualiztion tab, yet was getting an improper format for whatever reason. I will try again this week after troubleshooting in lab!) This page discusses the analysis of the visualization seen on the second tab. I chose to create a visualization of this piece of music, as it is an outlier amongst my group of newer jazz songs. I chose to use the manhattan measure in my graph as it provides a more in-depth look at the scale of the unusual timbre observed in this song. This artist comes from a Nordic background, so she uses different types of throatal acoustics, producing interesting sounding vocal noises (some call it singing, some don't). Additionally, while this artist uses some standard instruments in her music, she also uses some unusual instruments such as a seed shaker, a waterphone, and even scraping a rock against another rocky surface. This unusual assortment of instruments is also part of the explanation as to why the chromagraph exhibits a less popular skew of timbre across the time frame of the song. More usual jazz songs have a heavier spread of timbre starting at the 0 second mark, yet this song doesn't begin to pick up on the acoustics until around the 50 second mark.
