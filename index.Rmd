@@ -53,8 +53,10 @@ craziest |>
   theme_classic() +
   ggtitle("Cepstrogram of Science Fiction")
 ```
+
 ***
 I chose to analyze a piece of jazz named 'Science Fiction'. This may be one of the most cacophonous pieces of music I have ever listened to. One can discern where it gets its jazz label from, but that's probably the extent of the relation to the genre. There is no distinct tempo/rhythm/beat, and the flurry of instrumentals combined with randomly placed vocals gives the graph its coloring. The song tends to stay in the same couple of pitches, which we see are C1, C3, and C6. It made the most sense to analyze this song in terms of bars as compared to beats/tatums/sections, since there is no distinct patterns throughout the song. The artist uses an extremely wide variety of different acoustics in this song -- even including the noises of a crying baby! Additionally, using a euclidean method of distance helps us best display the range of sound this song runs to, given its larger range as compared to other distance formulas.
+
 
 ### WEEK 9 HW: 2) SELF-SIMILARITY MATRIX: Examining Chroma + Timbre Features
 ```{r}
@@ -76,6 +78,7 @@ craziest |>
   labs(x = "Time (sec)", y = "Time (sec)") + 
   ggtitle("Self-Similarity Matrix: Timbre in Science Fiction")
 ```
+
 ***
 The self-similarity matrix allows us to see exactly how chaotic this piece of music is. There is truly no distinct rhythm throughout the song, and only a few bars where some sort of tempo can be distinguished, around the 210th and 280th seconds; the very tailend of the song, with a mere 20 seconds to spare (when the song begins to finally slow and calm down). 
 
