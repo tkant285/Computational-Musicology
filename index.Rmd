@@ -15,7 +15,57 @@ library(spotifyr)
 library(compmus)
 ```
 
-### WEEK 9 HW: 1) CEPSTROGRAM: Examining Pitch Features
+### WEEK 10 HW: Comparing Techno vs Electro Jazz [Chordogram/Keygram]  
+```{r}
+techno_jazz <-
+  get_playlist_audio_features("", "5pWntw7hWEgh6joLmH3LmN") |>
+  slice(1:30) |>
+  add_audio_analysis()
+electro_jazz <-
+  get_playlist_audio_features("", "4fZIq4iZ72kiVlP4YJ48Ec") |>
+  slice(1:30) |>
+  add_audio_analysis()
+jazz_types <-
+  techno_jazz |>
+  mutate(genre = "Techno Jazz") |>
+  bind_rows(electro_jazz |> mutate(genre = "Electro Jazz"))
+
+jazz_types |>
+  mutate(
+    sections =
+      map(
+        sections,                                    # sections or segments
+        summarise_at,
+        vars(tempo, loudness, duration),             # features of interest
+        list(section_mean = mean, section_sd = sd)   # aggregation functions
+      )
+  ) |>
+  unnest(sections) |>
+  ggplot(
+    aes(
+      x = tempo,
+      y = tempo_section_sd,
+      colour = genre,
+      alpha = loudness
+    )
+  ) +
+  geom_point(aes(size = duration / 60)) +
+  geom_rug() +
+  theme_minimal() +
+  ylim(0, 5) +
+  labs(
+    x = "Mean Tempo (bpm)",
+    y = "SD Tempo",
+    colour = "Genre",
+    size = "Duration (min)",
+    alpha = "Volume (dBFS)"
+  )
+```
+
+***
+This visual depicts a low-level audio analysis chordogram for the comparison of 2 playlists of techno jazz and electronic jazz. The difference between these genres of jazz is that techno follows a 4x4 beat, whereas electro follows a 3x2 or sometimes a 3x4 beat. This difference is observable in the graphic, as you can see all the techno songs fall along a similar mean tempo, with varying standard deviations. However, since electro songs follow a more miscellanous rhythm, their mean tempos are more scattered across the graph accordingly. The length of the song doesn't seem to impact the results too much as there seems to be an even distribution between the longer and shorter songs in regards to their mean tempo. Looking at this graph, I would put electro jazz as an outlier of my corpus since the results from this playlist are more arbitrary to analyze as compared to techno jazz, which has more cohesive results. 
+
+### WEEK 9 HW: 1) CEPSTROGRAM
 ```{r}
 craziest <-
   get_tidy_audio_analysis("52o1gnWz14YMxlZYAYycTe") |> # Change URI.
@@ -162,4 +212,4 @@ noBigThing |>
 
 ***
 
-(Important to note that I tried to add this commentary to the visualiztion tab, yet was getting an improper format for whatever reason. I will try again this week after troubleshooting in lab!) This page discusses the analysis of the visualization seen on the second tab. I chose to create a visualization of this piece of music, as it is an outlier amongst my group of newer jazz songs. I chose to use the manhattan measure in my graph as it provides a more in-depth look at the scale of the unusual timbre observed in this song. This artist comes from a Nordic background, so she uses different types of throatal acoustics, producing interesting sounding vocal noises (some call it singing, some don't). Additionally, while this artist uses some standard instruments in her music, she also uses some unusual instruments such as a seed shaker, a waterphone, and even scraping a rock against another rocky surface. This unusual assortment of instruments is also part of the explanation as to why the chromagraph exhibits a less popular skew of timbre across the time frame of the song. More usual jazz songs have a heavier spread of timbre starting at the 0 second mark, yet this song doesn't begin to pick up on the acoustics until around the 50 second mark.
+This page discusses the analysis of the visualization seen on the second tab. I chose to create a visualization of this piece of music, as it is an outlier amongst my group of newer jazz songs. I chose to use the manhattan measure in my graph as it provides a more in-depth look at the scale of the unusual timbre observed in this song. This artist comes from a Nordic background, so she uses different types of throatal acoustics, producing interesting sounding vocal noises (some call it singing, some don't). Additionally, while this artist uses some standard instruments in her music, she also uses some unusual instruments such as a seed shaker, a waterphone, and even scraping a rock against another rocky surface. This unusual assortment of instruments is also part of the explanation as to why the chromagraph exhibits a less popular skew of timbre across the time frame of the song. More usual jazz songs have a heavier spread of timbre starting at the 0 second mark, yet this song doesn't begin to pick up on the acoustics until around the 50 second mark.
