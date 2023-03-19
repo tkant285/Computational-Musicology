@@ -15,6 +15,24 @@ library(spotifyr)
 library(compmus)
 ```
 
+### WEEK 11 HW: tempogram of yet another outlier
+```{r}
+spiritual <- get_tidy_audio_analysis("55X66sKArUevBeGD7buroR")
+spiritual |> 
+  tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  theme_classic()
+```
+
+***
+In my tempogram I chose to analyze an outlier of my overall corpus. This song belongs to the sub-genre of Spiritual Jazz. This sub-genre of jazz is quite unusual when compared to what the jazz norm is known as. The song, Astral Traveling, truly embodies the name of its sub-genre. Starting with a standard base tempo consisting of drums and some type of deep, bassy string instrument. There are some more unique instruments that jitter and jingle, as well as some vocals that are more breathy and don't adhere to the tempo as much. Looking at the tempogram on the left, there is some apparent tempo seen throughout the piece. I chose to use a cyclic visual since the song is almost 6 minutes with a variety of tones throughout. When generating the regular (non-cyclic) graphic for the tempos of this song, the graph looked a lot more cryptic to interpret and less defined, but you could definitely see the different bits of overlapping tempos. However, I am not so sure how accurate this graphic is since it did not seem to correspond to the tempos song as well as the cyclic graph does. 
+
+The other option: to create a histogram of tempi for different groups in my corpus... this will be done as well in order to get a more comprehensive understanding of different aspects of tempo found throughout the different sub-genres of my corpus. 
+
+
 ### WEEK 10 HW: Comparing Techno vs Electro Jazz [Chordogram/Keygram]  
 ```{r}
 techno_jazz <-
