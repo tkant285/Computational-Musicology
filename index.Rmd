@@ -9,31 +9,130 @@ output:
 
 ```{r}
 library(tidyverse)
+library(tidymodels)
 library(ggplot2)
 library(plotly)
 library(spotifyr)
 library(compmus)
+library(ggdendro)
+library(heatmaply)
+library(recipes)
 ```
 
-### WEEK 11 HW: tempogram of yet another outlier
+### [INTRODUCTION] An In-Depth Description of the Jazzical Corpus I Will Utilize Throughout This Course
+
+My corpus focuses on how has jazz evolved over the eras, starting from the 1920s. I picked this corpus because the origin of the genre and the multitude of strong cultural backgrounds tied to it piqued my interest. It will be interesting to explore the differences in the genre throughout the different ages of jazz, as well as how the abundance of sub-genres began to sprout from said eras as groups of comparison. I also like how there are a variety of instruments used in jazz, and different combinations of different instruments produce unique sounds. I expect some differences to be found in how the culture of the given time period, as well as sub-genre influence, affects the overall sound of that era in terms of tempo and chords. I expect for there to be an underlying similar rhythm maintained. 
+
+There is a ridiculous amount of diversity in the world of jazz music on Spotify. I will have to find the specific sound of each decade and compare those, otherwise it is risky to get lost in the sea of sub-genres that exist within the genre. I have begun doing this by creating playlists that separate the eras of jazz -- I have started widely with "new" and "old" jazz (as such the playlists are named), and will continue to narrow down the scope of these playlists and refine the content such that they fill different niches of the genre. My portfolio strongly focuses on the outliers that I have found throughout the genres and how these pieces have contributed to the overall and everchanging meaning of the jazz genre.
+
+***
+
+This is the playlist I have curated that includes the wide variety of jazz subgenres analyzed in this portfolio. The songs on this playlist range from classic 1920s jazz to techno jazz to spiritual jazz and everything in between! I used specific playlists curated by Spotify and jazz lovers on Spotify in order to assemble this playlist. However, in my analyses with more specific descriptions and visualizations, I utilized specific subgenre playlists instead of this one. The purpose of this playlist is to demonstrate the wide scope of the genre of jazz!
+
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/4dLfigx501FqXxQQlqI2zq?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+
+### Our First Outlier! Exploring the Realm of "Free" Jazz
+
 ```{r}
-spiritual <- get_tidy_audio_analysis("55X66sKArUevBeGD7buroR")
-spiritual |> 
-  tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) |>
-  ggplot(aes(x = time, y = bpm, fill = power)) +
-  geom_raster() +
+craziest <-
+  get_tidy_audio_analysis("52o1gnWz14YMxlZYAYycTe") |> # Change URI.
+  compmus_align(bars, segments) |>                     # Change `bars`
+  select(bars) |>                                      #   in all three
+  unnest(bars) |>                                      #   of these lines.
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "euclidean"              # Change summary & norm.
+      )
+  ) |>
+  mutate(
+    timbre =
+      map(segments,
+        compmus_summarise, timbre,
+        method = "mean", norm = "euclidean"              # Change summary & norm.
+      )
+  )
+
+craziest |>
+  compmus_gather_timbre() |>
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = basis,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  scale_fill_viridis_c() +                              
+  theme_classic() +
+  ggtitle("Cepstrogram of Science Fiction")
+```
+
+*** 
+
+I chose to analyze a piece of jazz named 'Science Fiction'. This may be one of the most cacophonous pieces of music I have ever listened to. One can discern where it gets its jazz label from, but that's probably the extent of the relation to the genre. There is no distinct tempo/rhythm/beat, and the flurry of instrumentals combined with randomly placed vocals gives the graph its coloring. The song tends to stay in the same couple of pitches, which we see are C1, C3, and C6. It made the most sense to analyze this song in terms of bars as compared to beats/tatums/sections, since there is no distinct patterns throughout the song. The artist uses an extremely wide variety of different acoustics in this song -- even including the noises of a crying baby! This miscellaneous use of audio is what gives Science Fiction's genre it's name: free. Additionally, using a euclidean method of distance helps us best display the range of sound this song runs to, given its larger range as compared to other distance formulas.
+
+
+### Self-Similarity Matrix of Science Fiction
+
+```{r}
+craziest |>
+  compmus_self_similarity(timbre, "euclidean") |> 
+  ggplot(
+    aes(
+      x = xstart + xduration / 2,
+      width = xduration,
+      y = ystart + yduration / 2,
+      height = yduration,
+      fill = d
+    )
+  ) +
+  geom_tile() +
+  coord_fixed() +
   scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)") +
-  theme_classic()
+  theme_classic() +
+  labs(x = "Time (sec)", y = "Time (sec)") + 
+  ggtitle("Self-Similarity Matrix: Timbre in Science Fiction")
 ```
 
 ***
-In my tempogram I chose to analyze an outlier of my overall corpus. This song belongs to the sub-genre of Spiritual Jazz. This sub-genre of jazz is quite unusual when compared to what the jazz norm is known as. The song, Astral Traveling, truly embodies the name of its sub-genre. Starting with a standard base tempo consisting of drums and some type of deep, bassy string instrument. There are some more unique instruments that jitter and jingle, as well as some vocals that are more breathy and don't adhere to the tempo as much. Looking at the tempogram on the left, there is some apparent tempo seen throughout the piece. I chose to use a cyclic visual since the song is almost 6 minutes with a variety of tones throughout. When generating the regular (non-cyclic) graphic for the tempos of this song, the graph looked a lot more cryptic to interpret and less defined, but you could definitely see the different bits of overlapping tempos. However, I am not so sure how accurate this graphic is since it did not seem to correspond to the tempos song as well as the cyclic graph does. 
 
-The other option: to create a histogram of tempi for different groups in my corpus... this will be done as well in order to get a more comprehensive understanding of different aspects of tempo found throughout the different sub-genres of my corpus. 
+The self-similarity matrix of the same song analyzed in the last tab allows us to see exactly how chaotic this piece of music is. There is truly no distinct rhythm throughout the song, and only a few bars where some sort of tempo can be distinguished, around the 210th and 280th seconds; the very tailend of the song, with a mere 20 seconds to spare (when the song begins to finally slow and calm down). 
 
+### The Discovery of Nordic Jazz... and it's un-jazziness
+```{r}
+nordic <-
+  get_tidy_audio_analysis("64SgPjq2ewcWwevrQO9wNQ") |>
+  select(segments) |>
+  unnest(segments) |>
+  select(start, duration, pitches)
 
-### WEEK 10 HW: Comparing Techno vs Electro Jazz [Chordogram/Keygram]  
+nordic |>
+  mutate(pitches = map(pitches, compmus_normalise, "manhattan")) |>
+  compmus_gather_chroma() |> 
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  ggtitle("Chromagraph of Nordic 'Jazz' Song") +
+  theme_minimal() +
+  scale_fill_viridis_c()
+```
+
+***
+
+This page discusses the analysis of the visualization seen on the second tab. I chose to create a visualization of this piece of music, as it is an outlier amongst my group of newer jazz songs. I chose to use the manhattan measure in my graph as it provides a more in-depth look at the scale of the unusual timbre observed in this song. This artist comes from a Nordic background, so she uses different types of throatal acoustics, producing interesting sounding vocal noises (some call it singing, some don't). Additionally, while this artist uses some standard instruments in her music, she also uses some unusual instruments such as a seed shaker, a waterphone, and even scraping a rock against another rocky surface. This unusual assortment of instruments is also part of the explanation as to why the chromagraph exhibits a less popular skew of timbre across the time frame of the song. More usual jazz songs have a heavier spread of timbre starting at the 0 second mark, yet this song doesn't begin to pick up on the acoustics until around the 50 second mark.
+
+### Comparing 2 of the Newest Jazz forms: Techno vs Electro  
 ```{r}
 techno_jazz <-
   get_playlist_audio_features("", "5pWntw7hWEgh6joLmH3LmN") |>
@@ -77,157 +176,105 @@ jazz_types |>
     colour = "Genre",
     size = "Duration (min)",
     alpha = "Volume (dBFS)"
-  )
+  ) +
+  ggtitle("Analyzing Tempos Across Electro and Techno Jazz Genres") 
 ```
 
 ***
-This visual depicts a low-level audio analysis chordogram for the comparison of 2 playlists of techno jazz and electronic jazz. The difference between these genres of jazz is that techno follows a 4x4 beat, whereas electro follows a 3x2 or sometimes a 3x4 beat. This difference is observable in the graphic, as you can see all the techno songs fall along a similar mean tempo, with varying standard deviations. However, since electro songs follow a more miscellanous rhythm, their mean tempos are more scattered across the graph accordingly. The length of the song doesn't seem to impact the results too much as there seems to be an even distribution between the longer and shorter songs in regards to their mean tempo. Looking at this graph, I would put electro jazz as an outlier of my corpus since the results from this playlist are more arbitrary to analyze as compared to techno jazz, which has more cohesive results. 
 
-### WEEK 9 HW: 1) CEPSTROGRAM
+This visual depicts a low-level audio analysis chordogram for the comparison of 2 playlists of techno jazz and electronic jazz. The difference between these genres of jazz is that techno follows a 4x4 beat, whereas electro follows a 3x2 or sometimes a 3x4 beat. This difference is observable in the graphic, as you can see all the techno songs fall along a similar mean tempo, with varying standard deviations. However, since electro songs follow a more miscellanous rhythm, their mean tempos are more scattered across the graph accordingly. The length of the song doesn't seem to impact the results too much as there seems to be an even distribution between the longer and shorter songs in regards to their mean tempo. Looking at this graph, I would put electro jazz as an outlier of my corpus since the results from this playlist are more arbitrary to analyze as compared to techno jazz, which has more cohesive results.
+
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/4fZIq4iZ72kiVlP4YJ48Ec?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/5pWntw7hWEgh6joLmH3LmN?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+
+
+### Tempogram of.... yet another outlier: There Is No Defined Tempo of Jazz!
+
 ```{r}
-craziest <-
-  get_tidy_audio_analysis("52o1gnWz14YMxlZYAYycTe") |> # Change URI.
-  compmus_align(bars, segments) |>                     # Change `bars`
-  select(bars) |>                                      #   in all three
-  unnest(bars) |>                                      #   of these lines.
+spiritual <- get_tidy_audio_analysis("55X66sKArUevBeGD7buroR")
+spiritual |> 
+  tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  theme_classic() +
+  ggtitle("Tempogram of a 'Spiritual Jazz' Song") 
+```
+
+***
+
+In my tempogram I chose to analyze an outlier of my overall corpus. This song belongs to the sub-genre of Spiritual Jazz. This sub-genre of jazz is quite unusual when compared to what the jazz norm is known as. The song, Astral Traveling, truly embodies the name of its sub-genre. Starting with a standard base tempo consisting of drums and some type of deep, bassy string instrument. There are some more unique instruments that jitter and jingle, as well as some vocals that are more breathy and don't adhere to the tempo as much. Looking at the tempogram on the left, there is some apparent tempo seen throughout the piece. I chose to use a cyclic visual since the song is almost 6 minutes with a variety of tones throughout. When generating the regular (non-cyclic) graphic for the tempos of this song, the graph looked a lot more cryptic to interpret and less defined, but you could definitely see the different bits of overlapping tempos. However, I am not so sure how accurate this graphic is since it did not seem to correspond to the tempos song as well as the cyclic graph does. 
+
+### Jazz Subgenres Are All Just Distant Cousins of Each Other
+```{r}
+
+jazzMIX <-
+  get_playlist_audio_features("jazzmixcollection", "37i9dQZF1EQqA6klNdJvwx") |>
+  add_audio_analysis() |>
   mutate(
+    segments = map2(segments, key, compmus_c_transpose),
     pitches =
       map(segments,
         compmus_summarise, pitches,
-        method = "mean", norm = "euclidean"              # Change summary & norm.
+        method = "mean", norm = "euclidean"
+      ),
+    timbre =
+      map(
+        segments,
+        compmus_summarise, timbre,
+        method = "mean"
       )
   ) |>
-  mutate(
-    timbre =
-      map(segments,
-        compmus_summarise, timbre,
-        method = "mean", norm = "euclidean"              # Change summary & norm.
-      )
-  )
+  mutate(pitches = map(pitches, compmus_normalise, "clr")) |>
+  mutate_at(vars(pitches, timbre), map, bind_rows) |>
+  unnest(cols = c(pitches, timbre))
 
-craziest |>
-  compmus_gather_timbre() |>
-  ggplot(
-    aes(
-      x = start + duration / 2,
-      width = duration,
-      y = basis,
-      fill = value
-    )
-  ) +
-  geom_tile() +
-  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
-  scale_fill_viridis_c() +                              
-  theme_classic() +
-  ggtitle("Cepstrogram of Science Fiction")
-```
-
-***
-I chose to analyze a piece of jazz named 'Science Fiction'. This may be one of the most cacophonous pieces of music I have ever listened to. One can discern where it gets its jazz label from, but that's probably the extent of the relation to the genre. There is no distinct tempo/rhythm/beat, and the flurry of instrumentals combined with randomly placed vocals gives the graph its coloring. The song tends to stay in the same couple of pitches, which we see are C1, C3, and C6. It made the most sense to analyze this song in terms of bars as compared to beats/tatums/sections, since there is no distinct patterns throughout the song. The artist uses an extremely wide variety of different acoustics in this song -- even including the noises of a crying baby! Additionally, using a euclidean method of distance helps us best display the range of sound this song runs to, given its larger range as compared to other distance formulas.
-
-
-### WEEK 9 HW: 2) SELF-SIMILARITY MATRIX: Examining Chroma + Timbre Features
-```{r}
-craziest |>
-  compmus_self_similarity(timbre, "euclidean") |> 
-  ggplot(
-    aes(
-      x = xstart + xduration / 2,
-      width = xduration,
-      y = ystart + yduration / 2,
-      height = yduration,
-      fill = d
-    )
-  ) +
-  geom_tile() +
-  coord_fixed() +
-  scale_fill_viridis_c(guide = "none") +
-  theme_classic() +
-  labs(x = "Time (sec)", y = "Time (sec)") + 
-  ggtitle("Self-Similarity Matrix: Timbre in Science Fiction")
-```
-
-***
-The self-similarity matrix allows us to see exactly how chaotic this piece of music is. There is truly no distinct rhythm throughout the song, and only a few bars where some sort of tempo can be distinguished, around the 210th and 280th seconds; the very tailend of the song, with a mere 20 seconds to spare (when the song begins to finally slow and calm down). 
-
-### [INTRODUCTION] An In-Depth Description of the Jazzical Corpus I Will Utilize Throughout This Course
-
-```{r}
-
-```
-***
-
-My corpus focuses on how has jazz evolved over the eras, starting from the 1920s. I picked this corpus because the origin of the genre and the multitude of strong cultural backgrounds tied to it piqued my interest. It will be interesting to explore the differences in the genre throughout the different ages of jazz, as well as how the abundance of sub-genres began to sprout from said eras as groups of comparison. I also like how there are a variety of instruments used in jazz, and different combinations of different instruments produce unique sounds. I expect some differences to be found in how the culture of the given time period, as well as sub-genre influence, affects the overall sound of that era in terms of tempo and chords. I expect for there to be an underlying similar rhythm maintained. There is a ridiculous amount of diversity in the world of jazz music on Spotify. I will have to find the specific sound of each decade and compare those, otherwise it is risky to get lost in the sea of sub-genres that exist within the genre. I have begun doing this by creating playlists that separate the eras of jazz -- I have started widely with "new" and "old" jazz (as such the playlists are named), and will continue to narrow down the scope of these playlists and refine the content such that they fill different niches of the genre.
-
-### [VISUALIZATION] #1: NEW Jazz Outlier Song
-```{r}
-nordic <-
-  get_tidy_audio_analysis("64SgPjq2ewcWwevrQO9wNQ") |>
-  select(segments) |>
-  unnest(segments) |>
-  select(start, duration, pitches)
-
-nordic |>
-  mutate(pitches = map(pitches, compmus_normalise, "manhattan")) |>
-  compmus_gather_chroma() |> 
-  ggplot(
-    aes(
-      x = start + duration / 2,
-      width = duration,
-      y = pitch_class,
-      fill = value
-    )
-  ) +
-  geom_tile() +
-  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
-  ggtitle("Chromagraph of Nordic 'Jazz' Song") +
-  theme_minimal() +
-  scale_fill_viridis_c()
-```
-
-### Lab 9: Experimenting with Cepstrograms
-```{r}
-noBigThing <-
-  get_tidy_audio_analysis("5FIuy1qgSfOENMDKHjsAsb") |> # Change URI.
-  compmus_align(bars, segments) |>                     # Change `bars`
-  select(bars) |>                                      #   in all three
-  unnest(bars) |>                                      #   of these lines.
-  mutate(
-    pitches =
-      map(segments,
-        compmus_summarise, pitches,
-        method = "mean", norm = "euclidean"              # Change summary & norm.
-      )
+jazzMIX_juice <-
+  recipe(
+    track.name ~
+      danceability +
+      energy +
+      loudness +
+      speechiness +
+      acousticness +
+      instrumentalness +
+      liveness +
+      valence +
+      tempo +
+      duration +
+      C + `C#|Db` + D + `D#|Eb` +
+      E + `F` + `F#|Gb` + G +
+      `G#|Ab` + A + `A#|Bb` + B +
+      c01 + c02 + c03 + c04 + c05 + c06 +
+      c07 + c08 + c09 + c10 + c11 + c12,
+    data = jazzMIX
   ) |>
-  mutate(
-    timbre =
-      map(segments,
-        compmus_summarise, timbre,
-        method = "mean", norm = "euclidean"              # Change summary & norm.
-      )
-  )
+  step_center(all_predictors()) |>
+  step_scale(all_predictors()) |> 
+  # step_range(all_predictors()) |> 
+  prep(jazzMIX |> mutate(track.name = str_trunc(track.name, 40))) |>
+  juice() |>
+  column_to_rownames("track.name")
+  
+jazzmix_dist <- dist(jazzMIX_juice, method = "euclidean")
 
-noBigThing |>
-  compmus_self_similarity(timbre, "euclidean") |> 
-  ggplot(
-    aes(
-      x = xstart + xduration / 2,
-      width = xduration,
-      y = ystart + yduration / 2,
-      height = yduration,
-      fill = d
-    )
-  ) +
-  geom_tile() +
-  coord_fixed() +
-  scale_fill_viridis_c(guide = "none") +
-  theme_classic() +
-  labs(x = "", y = "")
+jazzmix_dist |> 
+  hclust(method = "complete") |> # Try single, average, and complete.
+  dendro_data() |>
+  ggdendrogram() + 
+  ggtitle("Dendogram of the Songs From Genres Used in this Corpus")
+
 ```
-
-
-### [DISCUSSION]
 
 ***
 
-This page discusses the analysis of the visualization seen on the second tab. I chose to create a visualization of this piece of music, as it is an outlier amongst my group of newer jazz songs. I chose to use the manhattan measure in my graph as it provides a more in-depth look at the scale of the unusual timbre observed in this song. This artist comes from a Nordic background, so she uses different types of throatal acoustics, producing interesting sounding vocal noises (some call it singing, some don't). Additionally, while this artist uses some standard instruments in her music, she also uses some unusual instruments such as a seed shaker, a waterphone, and even scraping a rock against another rocky surface. This unusual assortment of instruments is also part of the explanation as to why the chromagraph exhibits a less popular skew of timbre across the time frame of the song. More usual jazz songs have a heavier spread of timbre starting at the 0 second mark, yet this song doesn't begin to pick up on the acoustics until around the 50 second mark.
+In a final analysis of all the jazz we have seen thus far in my corpus, I have decided to analyze the Jazz Mix playlist which  Spotify curated for me. To the left you can see a dendogram I created using this playlist. I used the complete method, as using the single method to analyze the nearest neighbor would be inaccurate since there is a such a wide variety of jazz songs in this playlist. As you can see, there are many clusters created still. This is due to the fact that differences in jazz genres differ by great margins, thus making it harder to cluster some of these genres together, despite how similar we might think they are. You can take a look at the playlist here:
+
+
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1EQqA6klNdJvwx?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+
+### Final Discussion and Concluding Thoughts
+
+Overall, this exploration of the jazz genre has been very informative. Jazz in the way we know it today started in the 1920s with the utilization of bass and percussion instruments combined with deep southern vocals. However, the origination of the genre are believed to come from American variations of traditional African music. I have been reminded over and over again that music does not adhere to strict guidelines and artists can classify their music as 'jazz' as long as it fits their own definition. To me, jazz is the incorporation of at least 2 or more instruments and perhaps even some vocals. The progression of jazz ever since its boom in the 1920s has taken unique turns, changing the genre for the better. I think there will never truly be a cookie-cutter definition of what jazz is, because it takes so many forms. Jazz seems to have unlimited potential since there is no pattern in which its Spotify API and chroma features follows. The tempo, danceability, timbre, pitch class, and all these other features can have a wide range - as we already see. I am excited to see what the future of jazz brings, since jazzy concepts can be combined with essentially any other genre. 
